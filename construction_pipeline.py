@@ -25,7 +25,7 @@ allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
 
 # Determine which dataset and split (train, test, val)
 # the construction is performed on.
-target_dataset = "youcook2"
+target_dataset = "crosstask"
 target_split = "train"
 
 # Determine the object detection parameters (if used)
@@ -106,11 +106,15 @@ for video_path in video_paths:
         # The first list contains the timestamps in seconds, the second list
         # contains the same timestamps as video frame numbers. The third list
         # contains information of the clips.
-        clip_list, clip_list_as_frames, clip_infos \
-            = cu.get_annotated_clips_as_list(
-                yt_id=metadata["yt_id"],
-                target_dataset=target_dataset,
-                target_split=target_split)
+        try:
+            clip_list, clip_list_as_frames, clip_infos \
+                = cu.get_annotated_clips_as_list(
+                    yt_id=metadata["yt_id"],
+                    target_dataset=target_dataset,
+                    target_split=target_split)
+        except ValueError:
+            print("No annotations found, skipping file.")
+            continue
 
     # Will contain the best frames for each clip either as a numpy array or
     # file path (recommended).
@@ -118,13 +122,13 @@ for video_path in video_paths:
 
     # DEV: For testing purposes, one can limit the amount of clips processed
     # per video.
-    clip_lim = 2
+    clip_lim = None
     clip_count = 0
 
     # Go through the clips.
     for i in range(len(clip_list)):
         # Early stopping.
-        if clip_count == clip_lim:
+        if clip_lim is not None and clip_count == clip_lim:
             break
 
         print(f"Processing clip {i + 1} / {len(clip_list)}...")
@@ -147,30 +151,53 @@ for video_path in video_paths:
 
         # Process the audio contents (determine speech / noise proportion)
         if analyze_audio_content:
-            proportions = speech_noise_analyzer.analyze(video_path,
-                                                        start_t=start_t,
-                                                        end_t=end_t)
-        # If the speech noise proportion was already calculated, save it.
-        elif clip_infos is not None:
-            proportions \
-                = clip_infos[i]["segment"]["speech_noise_ratio"]
+            sn_ratio = speech_noise_analyzer.analyze(video_path,
+                                                     start_t=start_t,
+                                                     end_t=end_t)
         # If no proportion is calculated.
         else:
-            proportions = None
+            sn_ratio = None
 
-        clips_best_frames[i] = {
+        # If the speech noise proportion was already calculated, save it.
+        if clip_infos is not None:
+            clip_info = clip_infos[i]
+            sn_ratio \
+                = clip_info["segment"]["speech_noise_ratio"]
+            description = clip_info["step_description"]
+            step_num = clip_info["step_num"]
+            clip_num = clip_info["clip_num"]
+            task_id = clip_info["task_id"]
+        else:
+            description = None
+            step_num = None
+            clip_num = i
+            task_id = None
+
+        all_info = {
             "frames": frames,
-            "proportions": proportions,
-            "detections": 0,
-            "clip_info": {
-                "clip_num": i,
-                "bounds_time": (start_t, end_t),
-                "bounds_frames": (start_f, end_f),
+            "clip_metadata": {
+                "clip_num": clip_num,
+                "task_id": task_id,
+
                 "original_file": video_path,
                 "original_dataset": target_dataset,
-                "frame_type": best_frame_return_type
+
+                "frame_type": best_frame_return_type,
+
+                "segment": {
+                    "step_num": step_num,
+                    "step_description": description,
+
+                    "segment_t": (start_t, end_t),
+                    "segment_f": (start_f, end_f),
+
+                    "detections": 0,
+                    "speech_noise_ratio": sn_ratio,
+                },
             }
         }
+
+        clips_best_frames[i] = all_info
 
         clip_count += 1
 

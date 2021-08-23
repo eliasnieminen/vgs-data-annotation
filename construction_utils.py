@@ -33,7 +33,10 @@ def get_dataset_video_paths(target_dataset: str,
 
     """
 
-    dataset_save_path = env[f"{target_dataset}_save_path"] + target_split
+    dataset_save_path = env[f"{target_dataset}_save_path"] \
+        if target_split == "train" \
+        else env[f"{target_dataset}_save_path_{target_split}"]
+
     video_paths = []
     for file in Path(dataset_save_path).resolve().iterdir():
         if file.suffix in allowed_video_suffixes:

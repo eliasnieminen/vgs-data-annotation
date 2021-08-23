@@ -33,6 +33,9 @@ def find_annotation_by_yt_id(target_dataset: str,
                         annotation = annotation_file.read()
                     break
 
+        if annotation == '':
+            return None
+
         annotations = []
         rows = annotation.split("\n")
         for row in rows:

@@ -11,8 +11,8 @@ from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
 env = ProjectEnvironment()
 
 # Determine the target dataset and split.
-target_dataset = "youcook2"
-target_split = "val"
+target_dataset = "crosstask"
+target_split = "train"
 
 # Determine clip save type.
 clip_save_types = ["video", "pickle"]
@@ -59,6 +59,11 @@ if target_dataset == "crosstask":
                 target_dataset=target_dataset,
                 annotation_path=raw_annotations_path,
                 yt_id=yt_id)
+
+            if all_annotations is None:
+                print(f"Annotations not found for video ID '{yt_id}'. "
+                      f"Skipping file.")
+                continue
 
             # Get the task text for the current task_id.
             # The task_text is a list of rows obtained from either
@@ -234,9 +239,12 @@ elif target_dataset == "youcook2":
                             "speech_noise_ratio": speech_noise_ratio[0]
                         }
                     }
-                    au.create_reference_clip(save_path=save_path,
-                                             file_name=file_name,
-                                             clip_info=clip_info)
+                    success = au.create_reference_clip(save_path=save_path,
+                                                       file_name=file_name,
+                                                       clip_info=clip_info)
+                    if not success:
+                        print(f"{save_path}/{file_name}.pickle: "
+                              f"File already exists.")
                 else:
                     raise ValueError(f"Unrecognized save type "
                                      f"'{write_clips_as}' for clip.")
