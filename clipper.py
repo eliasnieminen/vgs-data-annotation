@@ -107,7 +107,7 @@ class Clipper:
         """
         self.current_file = file
         # Get the duration of the video using ffprobe and python subprocess.
-        duration_probe = subprocess.run([
+        duration_probe = subprocess.run(" ".join([
             "ffprobe",
             "-v", "error",
             "-show_entries",
@@ -115,7 +115,7 @@ class Clipper:
             "-of",
             "default=noprint_wrappers=1:nokey=1",
             self.current_file
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
         self.video_duration = float(duration_probe.stdout)
 

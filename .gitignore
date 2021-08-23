@@ -18,3 +18,5 @@ models/*
 yamnet_segments/*
 testdownload/*
 clip_annotations/*
+test/*
+

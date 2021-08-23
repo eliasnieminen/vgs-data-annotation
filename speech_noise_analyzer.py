@@ -1,5 +1,5 @@
 from pathlib import Path
-from inaSpeechSegmenter import Segmenter
+# from inaSpeechSegmenter import Segmenter
 import pickle
 import librosa as lbr
 import numpy as np
@@ -12,146 +12,146 @@ import models.yamnet.yamnet as yamnet_model
 import models.yamnet.params as yamnet_params
 
 
-class SpeechNoiseAnalyzer:
-    def __init__(self,
-                 precalc: Optional[bool] = True,
-                 save_precalc: Optional[bool] = True,
-                 save_metadata: Optional[bool] = True,
-                 draw_plot: Optional[bool] = False,
-                 plt_args: Optional[Union[None, dict]] = None,
-                 ffmpeg: Optional[str] = None,
-                 delete_segmenter: Optional[bool] = False):
-        self.env = ProjectEnvironment()
-        self.precalc = precalc
-        self.save_precalc = save_precalc
-        self.draw_plot = draw_plot
-        self.plt_args = plt_args
-        self.seg = Segmenter(ffmpeg=ffmpeg) if not self.precalc else None
-        self.delete_segmenter = delete_segmenter
-        self.save_metadata = save_metadata
-        self.precalc_segments_path = self.env["precalc_segments_path"]
-        self.shares = {
-            "male": 0,
-            "female": 0,
-            "music": 0,
-            "noise": 0,
-            "noEnergy": 0
-        }
+# class SpeechNoiseAnalyzer:
+    # def __init__(self,
+                 # precalc: Optional[bool] = True,
+                 # save_precalc: Optional[bool] = True,
+                 # save_metadata: Optional[bool] = True,
+                 # draw_plot: Optional[bool] = False,
+                 # plt_args: Optional[Union[None, dict]] = None,
+                 # ffmpeg: Optional[str] = None,
+                 # delete_segmenter: Optional[bool] = False):
+        # self.env = ProjectEnvironment()
+        # self.precalc = precalc
+        # self.save_precalc = save_precalc
+        # self.draw_plot = draw_plot
+        # self.plt_args = plt_args
+        # self.seg = Segmenter(ffmpeg=ffmpeg) if not self.precalc else None
+        # self.delete_segmenter = delete_segmenter
+        # self.save_metadata = save_metadata
+        # self.precalc_segments_path = self.env["precalc_segments_path"]
+        # self.shares = {
+            # "male": 0,
+            # "female": 0,
+            # "music": 0,
+            # "noise": 0,
+            # "noEnergy": 0
+        # }
 
-    def analyze(self, file_path: str) -> dict:
+    # def analyze(self, file_path: str) -> dict:
 
-        file = Path(file_path).resolve()
+        # file = Path(file_path).resolve()
 
-        file_stem = file.stem
-        original_dataset = file.parent.stem
+        # file_stem = file.stem
+        # original_dataset = file.parent.stem
 
-        precalc_load_file = f"{self.precalc_segments_path}/" \
-                            f"{original_dataset}/{file_stem}_metadata.pickle"
+        # precalc_load_file = f"{self.precalc_segments_path}/" \
+                            # f"{original_dataset}/{file_stem}_metadata.pickle"
 
-        precalc_save_file = f"{self.precalc_segments_path}/" \
-                            f"{original_dataset}/{file_stem}_metadata.pickle"
+        # precalc_save_file = f"{self.precalc_segments_path}/" \
+                            # f"{original_dataset}/{file_stem}_metadata.pickle"
 
-        if not self.precalc:
-            segments = self.seg(str(file))
-            if self.delete_segmenter:
-                del self.seg
-            if self.save_precalc:
-                with open(precalc_save_file, 'wb') as pickle_file:
-                    pickle.dump({
-                        "segments": segments,
-                        "original_file": str(file)
-                    }, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
-            with open(precalc_load_file, 'rb') as pickle_file:
-                loaded = pickle.load(pickle_file)
-                segments = loaded["segments"]
+        # if not self.precalc:
+            # segments = self.seg(str(file))
+            # if self.delete_segmenter:
+                # del self.seg
+            # if self.save_precalc:
+                # with open(precalc_save_file, 'wb') as pickle_file:
+                    # pickle.dump({
+                        # "segments": segments,
+                        # "original_file": str(file)
+                    # }, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+        # else:
+            # with open(precalc_load_file, 'rb') as pickle_file:
+                # loaded = pickle.load(pickle_file)
+                # segments = loaded["segments"]
 
-        audio, sr = lbr.load(str(file), sr=None, mono=True)
-        len_audio_sec = len(audio) / sr
+        # audio, sr = lbr.load(str(file), sr=None, mono=True)
+        # len_audio_sec = len(audio) / sr
 
-        labels = {}
+        # labels = {}
 
-        seg_count = 0
-        for segment in segments:
-            label = segment[0]
-            segment_start = float(segment[1])
-            segment_end = float(segment[2])
-            segment_length = segment_end - segment_start
+        # seg_count = 0
+        # for segment in segments:
+            # label = segment[0]
+            # segment_start = float(segment[1])
+            # segment_end = float(segment[2])
+            # segment_length = segment_end - segment_start
 
-            if label not in labels.keys():
-                labels[label] = segment_length
-            else:
-                labels[label] += segment_length
+            # if label not in labels.keys():
+                # labels[label] = segment_length
+            # else:
+                # labels[label] += segment_length
 
-            offset = (seg_count % 3) * 0.05
-            if self.draw_plot:
-                plt.vlines(segment_start, ymin=-1, ymax=1, color='r')
-                plt.text(x=segment_start,
-                         y=0.95 - offset,
-                         s=f"{label}",
-                         fontsize="large")
+            # offset = (seg_count % 3) * 0.05
+            # if self.draw_plot:
+                # plt.vlines(segment_start, ymin=-1, ymax=1, color='r')
+                # plt.text(x=segment_start,
+                         # y=0.95 - offset,
+                         # s=f"{label}",
+                         # fontsize="large")
 
-            seg_count += 1
+            # seg_count += 1
 
-        if self.draw_plot:
-            n = np.linspace(0, len_audio_sec, num=len(audio))
-            plt.plot(n, audio)
-            plt.xlabel("Time (s)")
-            plt.ylabel("Amplitude")
-            plt.title(file_stem)
-            plt.show()
+        # if self.draw_plot:
+            # n = np.linspace(0, len_audio_sec, num=len(audio))
+            # plt.plot(n, audio)
+            # plt.xlabel("Time (s)")
+            # plt.ylabel("Amplitude")
+            # plt.title(file_stem)
+            # plt.show()
 
-        cum_share = 0
-        noise_cum_share = 0
-        speech_cum_share = 0
+        # cum_share = 0
+        # noise_cum_share = 0
+        # speech_cum_share = 0
 
-        for label in labels.keys():
-            share = 100 * labels[label] / len_audio_sec
-            if label in ["noise", "noEnergy", "music"]:
-                noise_cum_share += share
-            elif label in ["male", "female"]:
-                speech_cum_share += share
+        # for label in labels.keys():
+            # share = 100 * labels[label] / len_audio_sec
+            # if label in ["noise", "noEnergy", "music"]:
+                # noise_cum_share += share
+            # elif label in ["male", "female"]:
+                # speech_cum_share += share
 
-            cum_share += share
-            self.shares[label] = share / 100
-            print(f"{label} share: {share}")
+            # cum_share += share
+            # self.shares[label] = share / 100
+            # print(f"{label} share: {share}")
 
-        self.shares["cum_share"] = cum_share
-        self.shares["noise_cum_share"] = noise_cum_share
-        self.shares["speech_cum_share"] = speech_cum_share
+        # self.shares["cum_share"] = cum_share
+        # self.shares["noise_cum_share"] = noise_cum_share
+        # self.shares["speech_cum_share"] = speech_cum_share
 
-        if self.save_metadata:
-            self.write_metadata(original_file=file.name,
-                                original_dataset=original_dataset)
+        # if self.save_metadata:
+            # self.write_metadata(original_file=file.name,
+                                # original_dataset=original_dataset)
 
-        del audio, sr
-        return self.shares
+        # del audio, sr
+        # return self.shares
 
-    def get_shares(self):
-        return self.shares
+    # def get_shares(self):
+        # return self.shares
 
-    def write_metadata(self,
-                       original_file: str,
-                       original_dataset: str):
-        metadata = {
-            "file": {
-                "original_file": original_file,
-                "original_dataset": original_dataset
-            },
-            "metadata": {
-                "speech_noise_data": self.shares
-            }
-        }
+    # def write_metadata(self,
+                       # original_file: str,
+                       # original_dataset: str):
+        # metadata = {
+            # "file": {
+                # "original_file": original_file,
+                # "original_dataset": original_dataset
+            # },
+            # "metadata": {
+                # "speech_noise_data": self.shares
+            # }
+        # }
 
-        spl = original_file.split(".")[0].split("_")
-        video_id = spl[0]
-        yt_id = "_".join(spl[1:])
+        # spl = original_file.split(".")[0].split("_")
+        # video_id = spl[0]
+        # yt_id = "_".join(spl[1:])
 
-        filename = f"{self.env['metadata_path']}{original_dataset}/" \
-                   f"{video_id}_{yt_id}.pickle"
+        # filename = f"{self.env['metadata_path']}{original_dataset}/" \
+                   # f"{video_id}_{yt_id}.pickle"
 
-        with open(filename, "wb") as file:
-            pickle.dump(metadata, file, protocol=pickle.HIGHEST_PROTOCOL)
+        # with open(filename, "wb") as file:
+            # pickle.dump(metadata, file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 class YamNetSpeechNoiseAnalyzer:

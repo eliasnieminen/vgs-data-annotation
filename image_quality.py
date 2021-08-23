@@ -7,8 +7,8 @@ import cv2 as cv
 from abc import ABC, abstractmethod
 
 import numpy as np
-from object_detection.utils import label_map_util
-import od_utils
+# from object_detection.utils import label_map_util
+# import od_utils
 
 
 class Detector(ABC):
@@ -46,35 +46,35 @@ class BlurDetector(Detector):
         return self.blurriness
 
 
-class ObjectDetector(Detector):
-    def __init__(self, model_name: Optional[str] = "ssd_mobilenet_v1_coco_2017_11_17"):
-        super(ObjectDetector, self).__init__()
-        self.model_name = model_name
+# class ObjectDetector(Detector):
+    # def __init__(self, model_name: Optional[str] = "ssd_mobilenet_v1_coco_2017_11_17"):
+        # super(ObjectDetector, self).__init__()
+        # self.model_name = model_name
 
-    def detect(self,
-               img_obj: Union[str, np.ndarray, list],
-               confidence_threshold: Optional[float] = 0.5):
-        # labels_path = "data/coco/mscoco_label_map.pbtxt"
-        # category_index \
-        #     = label_map_util \
-        #     .create_category_index_from_labelmap(labels_path,
-        #                                          use_display_name=True)
+    # def detect(self,
+               # img_obj: Union[str, np.ndarray, list],
+               # confidence_threshold: Optional[float] = 0.5):
+        # # labels_path = "data/coco/mscoco_label_map.pbtxt"
+        # # category_index \
+        # #     = label_map_util \
+        # #     .create_category_index_from_labelmap(labels_path,
+        # #                                          use_display_name=True)
 
-        images_path = Path("img/").resolve()
-        test_image_paths = sorted(images_path.glob("*.jpg"))
+        # images_path = Path("img/").resolve()
+        # test_image_paths = sorted(images_path.glob("*.jpg"))
 
-        detection_model = od_utils.load_model(self.model_name)
+        # detection_model = od_utils.load_model(self.model_name)
 
-        print(detection_model.signatures["serving_default"].inputs)
-        print(detection_model.signatures["serving_default"].output_dtypes)
-        print(detection_model.signatures["serving_default"].output_shapes)
+        # print(detection_model.signatures["serving_default"].inputs)
+        # print(detection_model.signatures["serving_default"].output_dtypes)
+        # print(detection_model.signatures["serving_default"].output_shapes)
 
-        start = time.time()
+        # start = time.time()
 
-        num_detections = od_utils.get_num_objects(detection_model, img_obj)
+        # num_detections = od_utils.get_num_objects(detection_model, img_obj)
 
-        end = time.time()
+        # end = time.time()
 
-        print(f"Images took {end - start} sec")
+        # print(f"Images took {end - start} sec")
 
-        return num_detections
+        # return num_detections

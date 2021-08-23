@@ -5,6 +5,7 @@ import librosa
 import numpy as np
 import od_utils
 import matplotlib
+# matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import util
 import pickle
@@ -13,9 +14,8 @@ from env import ProjectEnvironment
 from pathlib import Path
 from typing import Optional, List, Dict, Union
 from video_metadata import VideoMetadata
-from image_quality import BlurDetector, ObjectDetector
+from image_quality import BlurDetector
 
-matplotlib.use("TkAgg")
 env = ProjectEnvironment()
 
 
