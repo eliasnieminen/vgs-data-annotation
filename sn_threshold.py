@@ -10,7 +10,7 @@ from env import ProjectEnvironment
 from pathlib import Path
 from util import format_2f
 
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 
 env = ProjectEnvironment()
 sn_analyzer = YamNetSpeechNoiseAnalyzer()
@@ -37,7 +37,7 @@ except KeyError:
 
 speech_proportions = []
 
-lim = None
+lim = 2
 count = 0
 
 for file in Path(video_path).iterdir():
@@ -71,8 +71,8 @@ for file in Path(video_path).iterdir():
 
     timing_end = time.time()
 
-    print(f"One file took {format_2f(timing_end - timing_start)} seconds.")
-
+    print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
+    
     count += 1
 
 print(f"Processed {count} videos.")
