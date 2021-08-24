@@ -36,6 +36,7 @@ except KeyError:
           f"for this dataset: '{target_dataset}'")
 
 speech_proportions = []
+speech_proportions_per_file = {}
 
 lim = 2
 count = 0
@@ -49,6 +50,7 @@ for file in Path(video_path).iterdir():
     if file.suffix in allowed_video_suffixes:
 
         video_metadata = cu.get_video_metadata(str(file), target_dataset)
+        yt_id = video_metadata.metadata["yt_id"]
 
         n_clips = np.round(video_metadata.duration * random_clips_per_second).astype(np.int16)
 
@@ -57,6 +59,8 @@ for file in Path(video_path).iterdir():
             clip_length=random_clip_length,
             video_metadata=video_metadata
         )
+
+        speech_proportions_per_file[yt_id] = []
 
         clip_count = 0
         for clip in clips:
@@ -67,13 +71,14 @@ for file in Path(video_path).iterdir():
                                       end_t=clip[1])
 
             speech_proportions.append(speech_proportion)
+            speech_proportions_per_file[yt_id].append(speech_proportion)
             clip_count += 1
 
-    timing_end = time.time()
+        timing_end = time.time()
 
-    print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
-    
-    count += 1
+        print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
+
+        count += 1
 
 print(f"Processed {count} videos.")
 
@@ -82,6 +87,11 @@ time_id = format_2f(time.time())
 with open(f"misc/dist/speech_proportions_{time_id}.pickle",
           'wb') as f:
     pickle.dump(speech_proportions, f)
+
+with open(f"misc/dist/speech_proportions_per_file_{time_id}.pickle",
+          'wb') as f:
+    pickle.dump(speech_proportions_per_file, f)
+
 
 speech_proportions = np.array(speech_proportions)
 
