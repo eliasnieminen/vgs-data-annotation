@@ -169,7 +169,7 @@ class Clipper:
 
         clip_length = end_t - start_t
 
-        ffmpeg_process = subprocess.run(" ".join([
+        ffmpeg_process = subprocess.run([
             self.env["ffmpeg_location"],  # ffmpeg executable
             "-ss", str(start_t),  # Starting point
             "-avoid_negative_ts", "1",  # Try to avoid artifacts (TODO)
@@ -177,7 +177,7 @@ class Clipper:
             "-c", "copy",  # Copy the file instead of editing it
             "-t", str(clip_length),  # The duration of the clip
             f"{save_path}/{file_name}.mp4"  # Output file
-        ]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     def check_me(self):
         """
