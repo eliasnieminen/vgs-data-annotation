@@ -21,34 +21,52 @@ target_split = "train"
 allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
 
 video_path = None
+override_video_path = True
 
 random_clips_per_minute = 6
 random_clips_per_second = random_clips_per_minute / 60
 random_clip_length = 10.0
 
-try:
-    video_path = env[f"{target_dataset}_save_path"] \
-        if target_split == "train" \
-        else env[f"{target_dataset}_save_path_{target_split}"]
+if not override_video_path:
 
-except KeyError:
-    print(f"Invalid split '{target_split}' "
-          f"for this dataset: '{target_dataset}'")
+    try:
+        video_path = env[f"{target_dataset}_save_path"] \
+            if target_split == "train" \
+            else env[f"{target_dataset}_save_path_{target_split}"]
+
+    except KeyError:
+        print(f"Invalid split '{target_split}' "
+              f"for this dataset: '{target_dataset}'")
+
+else:
+    video_path = "/lustre/scratch/specog/youcook2_dataset/train/"
+
+
+file_count = 0
+for file in Path(video_path).resolve().iterdir():
+    if file.suffix in allowed_video_suffixes:
+        file_count += 1
+
+print(f"Found {file_count} videos from {video_path}.")
 
 speech_proportions = []
 speech_proportions_per_file = {}
 
-lim = 2
+time_id = format_2f(time.time())
+
+lim = None
 count = 0
 
 for file in Path(video_path).iterdir():
     timing_start = time.time()
-
+    
     if lim is not None and count == lim:
         break
 
     if file.suffix in allowed_video_suffixes:
-
+        
+        print(f"Processing file {count + 1} / {file_count}.")
+        
         video_metadata = cu.get_video_metadata(str(file), target_dataset)
         yt_id = video_metadata.metadata["yt_id"]
 
@@ -75,8 +93,6 @@ for file in Path(video_path).iterdir():
             clip_count += 1
 
         timing_end = time.time()
-
-        time_id = format_2f(time.time())
 
         print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
 
