@@ -80,7 +80,6 @@ for file in Path(video_path).iterdir():
 
         print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
 
-
         with open(f"misc/dist/speech_proportions_{target_dataset}_{target_split}_{time_id}.pickle",
                   'wb') as f:
             pickle.dump(speech_proportions, f)
