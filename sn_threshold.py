@@ -76,21 +76,22 @@ for file in Path(video_path).iterdir():
 
         timing_end = time.time()
 
+        time_id = format_2f(time.time())
+
         print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
+
+
+        with open(f"misc/dist/speech_proportions_{target_dataset}_{target_split}_{time_id}.pickle",
+                  'wb') as f:
+            pickle.dump(speech_proportions, f)
+
+        with open(f"misc/dist/speech_proportions_per_file_{target_dataset}_{target_split}_{time_id}.pickle",
+                  'wb') as f:
+            pickle.dump(speech_proportions_per_file, f)
 
         count += 1
 
 print(f"Processed {count} videos.")
-
-time_id = format_2f(time.time())
-
-with open(f"misc/dist/speech_proportions_{target_dataset}_{target_split}_{time_id}.pickle",
-          'wb') as f:
-    pickle.dump(speech_proportions, f)
-
-with open(f"misc/dist/speech_proportions_per_file_{target_dataset}_{target_split}_{time_id}.pickle",
-          'wb') as f:
-    pickle.dump(speech_proportions_per_file, f)
 
 
 speech_proportions = np.array(speech_proportions)
