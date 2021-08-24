@@ -20,4 +20,4 @@ testdownload/*
 clip_annotations/*
 test/*
 histtest.py
-
+bash/*

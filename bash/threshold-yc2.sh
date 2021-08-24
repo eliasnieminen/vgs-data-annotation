@@ -6,7 +6,7 @@
 #SBATCH --mail-type=END
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --partition=normal
+#SBATCH --partition=gpu --gres=gpu:1
 #SBATCH --time=38:00:00
 #SBATCH --mem=16000
 echo "Starting job"
