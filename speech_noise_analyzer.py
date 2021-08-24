@@ -167,16 +167,25 @@ class YamNetSpeechNoiseAnalyzer:
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
         self.yamnet.load_weights("models/yamnet/yamnet.h5")
 
-    def analyze(self, video_path, start_t, end_t) -> tuple:
-        clip_dur = end_t - start_t
-        audio, sr = lbr.load(video_path,
+    def analyze(self,
+                video: Union[str, np.ndarray],
+                sr: Optional[Union[float, None]] = None,
+                start_t: Optional[Union[float, None]] = None,
+                end_t: Optional[Union[float, None]] = None,
+                whole_video: Optional[bool] = False) -> tuple:
+
+        if not whole_video:
+            clip_dur = end_t - start_t
+        else:
+            start_t = 0
+            clip_dur = None
+
+        audio, sr = lbr.load(video,
                              sr=self.sr,
                              mono=True,
                              offset=start_t,
                              duration=clip_dur,
                              res_type=self.res_type)
-
-        audio_len_s = len(audio) / sr
 
         scores, embeds, spec = self.yamnet(audio)
         scores = scores.numpy()

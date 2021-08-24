@@ -220,7 +220,7 @@ def select_sharpest_frames(video_path: str,
     pos_frame = cap.get(cv.CAP_PROP_POS_FRAMES)
 
     blur_detector = BlurDetector(threshold=blur_threshold)
-    object_detector = ObjectDetector()
+    # object_detector = ObjectDetector()
 
     latest_second_frames = []
     best_frames = []
@@ -312,3 +312,11 @@ def detect_objects(clips_and_frames: dict,
         obj_detection_confidence_threshold)
 
     return detections
+
+
+def write_clip(clip_info: dict,
+               save_path: str,
+               file_name: str):
+    save_path = f"{save_path}{file_name}"
+    with open(save_path, 'wb') as clip_file:
+        pickle.dump(clip_info, clip_file)

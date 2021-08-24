@@ -108,7 +108,7 @@ if target_dataset == "crosstask":
                 end_f = int(fps * end_t)
 
                 # Calculate the speech noise ratio.
-                speech_noise_ratio = sn_analyzer.analyze(video_path=str(file),
+                speech_noise_ratio = sn_analyzer.analyze(video=str(file),
                                                          start_t=start_t,
                                                          end_t=end_t)
 
@@ -211,7 +211,7 @@ elif target_dataset == "youcook2":
                 sentence = segment["sentence"]
 
                 # Calculate the speech noise ratio.
-                speech_noise_ratio = sn_analyzer.analyze(video_path=str(file),
+                speech_noise_ratio = sn_analyzer.analyze(video=str(file),
                                                          start_t=start_t,
                                                          end_t=end_t)
 

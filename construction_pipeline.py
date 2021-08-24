@@ -9,9 +9,10 @@ import od_utils
 from env import ProjectEnvironment
 from pathlib import Path
 import construction_utils as cu
-from video_metadata import VideoMetadata
 from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
 from util import format_id
+import librosa as lbr
+import soundfile as sf
 
 
 # Initialize environment variable
@@ -45,6 +46,14 @@ use_random_clips = False
 
 # If True, the best frames will be shown with matplotlib.pyplot.
 plotting = False
+
+# If True, the clips are written to file on the go. This reduces the risk
+# of data loss if there is a problem during processing.
+write_clips_during_processing = True
+
+# If True, the audio associated with each of the clips in the dataset are
+# written to file.
+write_audio_clips = True
 
 # If 'path', the frames from the best frame detection
 # are saved to a specified directory and only the image paths are returned.
@@ -89,6 +98,9 @@ for video_path in video_paths:
     # Determine the save path.
     frame_save_path = f"{env['clip_save_path']}" \
                       f"{target_dataset}/{target_split}/frames/"
+
+    audio_save_path = f"{env['clip_save_path']}{target_dataset}/" \
+                      f"{target_split}/audio/"
 
     # Get the clips.
     # If random clips, one can determine properties of the clips.
@@ -135,6 +147,7 @@ for video_path in video_paths:
 
         # Get the start and end of the clip as seconds.
         start_t, end_t = clip_list[i]
+        clip_duration = end_t - start_t
 
         # Get the start and end of the clip as frames.
         start_f, end_f = clip_list_as_frames[i]
@@ -173,8 +186,22 @@ for video_path in video_paths:
             clip_num = i
             task_id = None
 
+        if write_audio_clips:
+            audio, sr = lbr.load(video_path,
+                                 sr=None,
+                                 offset=start_t,
+                                 duration=clip_duration)
+
+            audio_file_name \
+                = f"{vid_metadata.metadata['yt_id']}_clip{clip_num}.wav"
+            audio_final_save_path = audio_save_path + audio_file_name
+            sf.write(audio_final_save_path, audio, sr)
+        else:
+            audio_final_save_path = None
+
         all_info = {
             "frames": frames,
+            "audio": audio_final_save_path,
             "clip_metadata": {
                 "clip_num": clip_num,
                 "task_id": task_id,
@@ -196,6 +223,16 @@ for video_path in video_paths:
                 },
             }
         }
+
+        # Write the clip if allowed.
+        if write_clips_during_processing:
+            save_path = f"{env['clip_save_path']}{target_dataset}/{target_split}/"
+            file_name = f"{format_id(count, 8)}_{vid_metadata.metadata['yt_id']}_" \
+                        f"clip{clip_num}.pickle"
+
+            cu.write_clip(clip_info=all_info,
+                          save_path=save_path,
+                          file_name=file_name)
 
         clips_best_frames[i] = all_info
 
@@ -229,16 +266,17 @@ if use_object_detection:
                     all_clips_and_frames[yt_id_clip][clip]["detections"] \
                         = detections[yt_id_det][clip]
 
-# Save the obtained clips and frames.
-count = 0
-for yt_id in all_clips_and_frames.keys():
-    clips = all_clips_and_frames[yt_id]
-    for clip_num in clips.keys():
-        clip = clips[clip_num]
-        save_dir = f"{env['clip_save_path']}{target_dataset}/{target_split}/"
-        clip_id = format_id(count)
-        file_name = f"{clip_id}_{yt_id}_clip{clip_num}.pickle"
-        save_path = f"{save_dir}{file_name}"
-        with open(save_path, 'wb') as clip_file:
-            pickle.dump(clip, clip_file)
-        count += 1
+if not write_clips_during_processing:
+    # Save the obtained clips and frames, if they were not saved before.
+    count = 0
+    for yt_id in all_clips_and_frames.keys():
+        clips = all_clips_and_frames[yt_id]
+        for clip_num in clips.keys():
+            clip = clips[clip_num]
+            save_dir = f"{env['clip_save_path']}{target_dataset}/{target_split}/"
+            clip_id = format_id(count)
+            file_name = f"{clip_id}_{yt_id}_clip{clip_num}.pickle"
+            save_path = f"{save_dir}{file_name}"
+            with open(save_path, 'wb') as clip_file:
+                pickle.dump(clip, clip_file)
+            count += 1
