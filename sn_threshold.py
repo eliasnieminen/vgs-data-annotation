@@ -21,7 +21,7 @@ target_split = "train"
 allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
 
 video_path = None
-override_video_path = True
+override_video_path = False
 
 random_clips_per_minute = 6
 random_clips_per_second = random_clips_per_minute / 60
@@ -52,7 +52,28 @@ print(f"Found {file_count} videos from {video_path}.")
 speech_proportions = []
 speech_proportions_per_file = {}
 
-time_id = format_2f(time.time())
+check_previous = True
+session_id = format_2f(time.time())
+
+if check_previous:
+
+    previously_calculated_path = "misc/dist/"
+    prev_id = "1629811667.08"
+
+    for file in Path(previously_calculated_path).resolve().iterdir():
+        if prev_id in file.name:
+            with open(str(file), 'rb') as f:
+                if "per" in file.name:
+                    speech_proportions_per_file = pickle.load(f)
+                else:
+                    speech_proportions = pickle.load(f)
+
+    if len(speech_proportions) > 0 and len(speech_proportions_per_file) > 0:
+        session_id = prev_id
+        print("Found previous computations. Continuing.")
+    else:
+        print("No previous computations found. Starting from beginning.")
+
 
 lim = None
 count = 0
@@ -70,6 +91,11 @@ for file in Path(video_path).iterdir():
         video_metadata = cu.get_video_metadata(str(file), target_dataset)
         yt_id = video_metadata.metadata["yt_id"]
 
+        if yt_id in speech_proportions_per_file.keys():
+            print("Already calculated, skipping...")
+            count += 1
+            continue
+
         n_clips = np.round(video_metadata.duration * random_clips_per_second).astype(np.int16)
 
         clips, clips_as_frames = cu.get_random_clips_as_list(
@@ -83,10 +109,16 @@ for file in Path(video_path).iterdir():
         clip_count = 0
         for clip in clips:
             print(f"Clip {clip_count + 1} / {len(clips)}")
-            speech_proportion, noise_proportion \
+            sn_ratio \
                 = sn_analyzer.analyze(video=str(file),
                                       start_t=clip[0],
                                       end_t=clip[1])
+
+            if sn_ratio is not None:
+                speech_proportion, noise_proportion = sn_ratio
+            else:
+                print("Error reading file, skipping...")
+                continue
 
             speech_proportions.append(speech_proportion)
             speech_proportions_per_file[yt_id].append(speech_proportion)
@@ -96,11 +128,11 @@ for file in Path(video_path).iterdir():
 
         print(f"{str(file)} file took {format_2f(timing_end - timing_start)} seconds.")
 
-        with open(f"misc/dist/speech_proportions_{target_dataset}_{target_split}_{time_id}.pickle",
+        with open(f"misc/dist/speech_proportions_{target_dataset}_{target_split}_{session_id}.pickle",
                   'wb') as f:
             pickle.dump(speech_proportions, f)
 
-        with open(f"misc/dist/speech_proportions_per_file_{target_dataset}_{target_split}_{time_id}.pickle",
+        with open(f"misc/dist/speech_proportions_per_file_{target_dataset}_{target_split}_{session_id}.pickle",
                   'wb') as f:
             pickle.dump(speech_proportions_per_file, f)
 
@@ -115,5 +147,5 @@ bins = np.linspace(0, 1, num=50)
 
 plt.hist(speech_proportions, bins)
 
-plt.savefig(f"figures/sn_ratio_distribution/dist1_{time_id}.png")
+plt.savefig(f"figures/sn_ratio_distribution/dist1_{session_id}.png")
 plt.show()

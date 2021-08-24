@@ -172,7 +172,7 @@ class YamNetSpeechNoiseAnalyzer:
                 sr: Optional[Union[float, None]] = None,
                 start_t: Optional[Union[float, None]] = None,
                 end_t: Optional[Union[float, None]] = None,
-                whole_video: Optional[bool] = False) -> tuple:
+                whole_video: Optional[bool] = False) -> Union[tuple, None]:
 
         if not whole_video:
             clip_dur = end_t - start_t
@@ -180,12 +180,15 @@ class YamNetSpeechNoiseAnalyzer:
             start_t = 0
             clip_dur = None
 
-        audio, sr = lbr.load(video,
-                             sr=self.sr,
-                             mono=True,
-                             offset=start_t,
-                             duration=clip_dur,
-                             res_type=self.res_type)
+        try:
+            audio, sr = lbr.load(video,
+                                 sr=self.sr,
+                                 mono=True,
+                                 offset=start_t,
+                                 duration=clip_dur,
+                                 res_type=self.res_type)
+        except RuntimeError:
+            return None
 
         scores, embeds, spec = self.yamnet(audio)
         scores = scores.numpy()
