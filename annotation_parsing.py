@@ -11,7 +11,7 @@ from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
 env = ProjectEnvironment()
 
 # Determine the target dataset and split.
-target_dataset = "crosstask"
+target_dataset = "youcook2"
 target_split = "train"
 
 # Determine clip save type.
