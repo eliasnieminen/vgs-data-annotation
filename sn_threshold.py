@@ -21,7 +21,7 @@ target_split = "train"
 allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
 
 video_path = None
-override_video_path = False
+override_video_path = True
 
 random_clips_per_minute = 6
 random_clips_per_second = random_clips_per_minute / 60
@@ -58,7 +58,7 @@ session_id = format_2f(time.time())
 if check_previous:
 
     previously_calculated_path = "misc/dist/"
-    prev_id = "1629811667.08"
+    prev_id = "1629798870.00"
 
     for file in Path(previously_calculated_path).resolve().iterdir():
         if prev_id in file.name:
@@ -74,7 +74,6 @@ if check_previous:
     else:
         print("No previous computations found. Starting from beginning.")
 
-
 lim = None
 count = 0
 
@@ -85,6 +84,11 @@ for file in Path(video_path).iterdir():
         break
 
     if file.suffix in allowed_video_suffixes:
+        
+        if ".f135" in file.name or ".f133" in file.name:
+            print("Faulty file, skipping...")
+            count += 1
+            continue
         
         print(f"Processing file {count + 1} / {file_count}.")
         
