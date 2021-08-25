@@ -206,7 +206,10 @@ class YamNetSpeechNoiseAnalyzer:
             seg = {
                 "segment": (start_pos, end_pos),
             }
-            if class_index == 0 or class_index == 1:
+            if class_index == 0 or \
+               class_index == 1 or \
+               class_index == 2 or \
+               class_index == 3:
                 speech_count += 1
                 seg["content"] = 0
             else:
