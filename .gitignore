@@ -21,3 +21,4 @@ clip_annotations/*
 test/*
 histtest.py
 bash/*
+subjective_analysis/*
