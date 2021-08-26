@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 import construction_utils as cu
 import annotation_utils as au

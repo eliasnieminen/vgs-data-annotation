@@ -177,7 +177,7 @@ class Clipper:
             "-c", "copy",  # Copy the file instead of editing it
             "-t", str(clip_length),  # The duration of the clip
             f"{save_path}/{file_name}.mp4"  # Output file
-        ]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
     def check_me(self):
         """
