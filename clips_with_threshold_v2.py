@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import construction_utils as cu
 import annotation_utils as au
@@ -25,7 +27,7 @@ override_video_path = False
 
 num_random_videos = 2
 
-random_clips_per_minute = 6
+random_clips_per_minute = 3
 random_clips_per_second = random_clips_per_minute / 60
 random_clip_lenght = 10.0
 
@@ -114,10 +116,12 @@ for file in video_paths:
                   f"{num_accepted_clips} / {num_clips_whole}")
 
             try:
-                speech_proportion, noise_proportion = sn_analyzer.analyze(
-                    file,
-                    start_t=rand_clip[0],
-                    end_t=rand_clip[1])
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    speech_proportion, noise_proportion = sn_analyzer.analyze(
+                        file,
+                        start_t=rand_clip[0],
+                        end_t=rand_clip[1])
             except NoBackendError:
                 print(f"Bad file: {file}. Skipping.")
                 bad_file = True
