@@ -22,16 +22,23 @@ write_clips_as = clip_save_types[1]
 save_path = f"{env['clip_annotations_save_path']}" \
             f"{target_dataset}/{target_split}/"
 
-# Get the dataset split video path:
-try:
-    video_path \
-        = env[f"{target_dataset}_save_path"] if target_split == "train" \
-        else env[f"{target_dataset}_save_path_{target_split}"]
+override_video_path = True
 
-except KeyError:
-    # If the split or dataset was not found, raise an error.
-    raise KeyError(f"Error: '{target_split}' is an invalid dataset "
-                   f"split for '{target_dataset}'.")
+if not override_video_path:
+
+    # Get the dataset split video path:
+    try:
+        video_path \
+            = env[f"{target_dataset}_save_path"] if target_split == "train" \
+            else env[f"{target_dataset}_save_path_{target_split}"]
+
+    except KeyError:
+        # If the split or dataset was not found, raise an error.
+        raise KeyError(f"Error: '{target_split}' is an invalid dataset "
+                       f"split for '{target_dataset}'.")
+
+else:
+    video_path = "/lustre/scratch/specog/youcook2_dataset/train/"
 
 # Define the allowed video suffixes.
 allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
@@ -183,7 +190,12 @@ elif target_dataset == "youcook2":
             fps = video_metadata.fps
 
             # Get the annotations for the current video.
-            annotations = all_annotations[yt_id]
+            try:
+                annotations = all_annotations[yt_id]
+            except KeyError:
+                print("Invalid id, skipping")
+                continue
+            
             # Get the segments for the current video.
             segments = annotations["annotations"]
 
