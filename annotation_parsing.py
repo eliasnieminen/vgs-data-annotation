@@ -22,7 +22,7 @@ write_clips_as = clip_save_types[1]
 save_path = f"{env['clip_annotations_save_path']}" \
             f"{target_dataset}/{target_split}/"
 
-override_video_path = True
+override_video_path = False
 
 if not override_video_path:
 
@@ -188,6 +188,16 @@ elif target_dataset == "youcook2":
             yt_id = video_metadata.metadata["yt_id"]
             task_id = video_metadata.metadata["task_id"]
             fps = video_metadata.fps
+
+            already_computed = False
+            for ann_file in Path(save_path).resolve().iterdir():
+                if yt_id in ann_file.name:
+                    already_computed = True
+                    break
+
+            if already_computed:
+                print("Already computed, skipping...")
+                continue
 
             # Get the annotations for the current video.
             try:

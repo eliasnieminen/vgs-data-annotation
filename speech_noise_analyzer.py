@@ -166,6 +166,7 @@ class YamNetSpeechNoiseAnalyzer:
             "models/yamnet/yamnet_class_map.csv")
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
         self.yamnet.load_weights("models/yamnet/yamnet.h5")
+        self.segments = []
 
     def analyze(self,
                 video: Union[str, np.ndarray],
@@ -226,5 +227,9 @@ class YamNetSpeechNoiseAnalyzer:
         print(f"Noise proportion: "
               f"{'{:.2f}'.format(noise_proportion)}")
 
+        self.segments = segments
+
         return speech_proportion, noise_proportion
 
+    def get_segments(self):
+        return self.segments
