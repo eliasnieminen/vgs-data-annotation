@@ -17,6 +17,22 @@ Note: On Linux, after the environment has been installed, run the following comm
 
 Note: In order to use YAMNet in the audio segmentation, one needs to use Tensorflow > `2.5.0`. I have not tried to use Tensorflow 1 with YAMNet, but it may work.
 
+### YAMNet Installation
+
+First, clone the Tensorflow models repository: https://github.com/tensorflow/models
+
+Then, go to `models/research/audioset/` and copy the `yamnet` directory to your project directory under `src/models/` directory (create the `src/models/` directory if it doesn't exist).
+
+Then, go to the `yamnet` directory with the command line and run `curl -O https://storage.googleapis.com/audioset/yamnet.h5`. This will download the weights for the YAMNet model.
+
+After this, you might have to edit the source code a bit:
+
+- In `inference.py`:
+  - Change `import params as yamnet_params` to `from . import params as yamnet_params`.
+  - Change `import yamnet as yamnet_models` to `from . import yamnet as yamnet_models`.
+- In `yamnet.py`:
+  - Change `import features as features_lib` to `from . import features as features_lib`
+
 ## Useful Code
 
 ### `src/utilities/construction_utilities.py`
