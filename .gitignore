@@ -22,7 +22,6 @@ testdownload/*
 clip_annotations/*
 test/*
 histtest.py
-bash/*
 subjective_analysis/*
 valid_random_clips/*
 
