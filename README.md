@@ -42,5 +42,3 @@ This file contains a pipeline for constructing structured pickle files from the 
 
 ### `src/training-data-construction/construction_pipeline.py`
 This file contains a pipeline for constructing training data for VGS models. One can use random clipping (with audio content analysis) from the dataset videos or use the annotations computed with the `annotation_parsing.py` script.
-
-Clipping video files: `src/utilities/clipper.py`
