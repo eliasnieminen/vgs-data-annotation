@@ -6,9 +6,20 @@ All the source code is included in the `src` folder.
 
 ## Installation
 
-Use `conda` to create a new environment from `data-annotation.yml`. This will install all the dependencies necessary for the code to run. You may change the environment name from the yml file.
+Use `conda` to create a new environment. Dependencies:
 
-`conda env create -f data-annotation.yml`
+```
+Conda:
+python=3.9.5
+tensorflow=2.5.0
+numpy
+scipy
+
+Pip:
+matplotlib
+opencv-python
+scikit-learn
+```
 
 Note: On Linux, after the environment has been installed, run the following commands to install `ffmpeg`:
 
