@@ -2,8 +2,7 @@ import pickle
 
 from pathlib import Path
 from env import ProjectEnvironment
-from util import check_file_exists
-
+from src.utilities.util import check_file_exists
 
 env = ProjectEnvironment()
 
@@ -11,14 +10,14 @@ env = ProjectEnvironment()
 def find_annotation_by_yt_id(target_dataset: str,
                              annotation_path: str,
                              yt_id: str):
-    """
+    """Finds annotation from file (for CrossTask dataset currently).
 
     Args:
-        target_dataset:
-        annotation_path:
-        yt_id:
+        target_dataset: Crosstask.
+        annotation_path: The path to crosstask annotation folder.
+        yt_id: The YouTube id of the searched video.
 
-    Returns:
+    Returns: List of tuples: (step_num, step_start, step_end) as seconds.
 
     """
 
@@ -53,13 +52,13 @@ def find_annotation_by_yt_id(target_dataset: str,
 
 def get_task_text(target_dataset: str,
                   task_id: str):
-    """
+    """For CrossTask. Gets the step description for the given task id.
 
     Args:
-        target_dataset:
-        task_id:
+        target_dataset: Crosstask
+        task_id: The id of the task.
 
-    Returns:
+    Returns: List of rows containing the task text description and info.
 
     """
 
@@ -109,14 +108,14 @@ def get_task_text(target_dataset: str,
 def create_reference_clip(save_path: str,
                           file_name: str,
                           clip_info: dict):
-    """
+    """Writes an annotation pickle file to desired location.
 
     Args:
-        save_path:
-        file_name:
-        clip_info:
+        save_path: The destination directory.
+        file_name: The file name of the pickle-file.
+        clip_info: The object to be saved.
 
-    Returns:
+    Returns: None
 
     """
     file_name = file_name + ".pickle"

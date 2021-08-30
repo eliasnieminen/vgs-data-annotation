@@ -1,14 +1,13 @@
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 import time
 import pickle
 
 import construction_utils as cu
-from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
-from env import ProjectEnvironment
+from src.analysis.speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
+from src.utilities.env import ProjectEnvironment
 from pathlib import Path
-from util import format_2f
+from src.utilities.util import format_2f
 
 # matplotlib.use("TkAgg")
 
@@ -57,7 +56,7 @@ session_id = format_2f(time.time())
 
 if check_previous:
 
-    previously_calculated_path = "misc/dist/"
+    previously_calculated_path = "../../misc/dist/"
     prev_id = "1629798870.00"
 
     for file in Path(previously_calculated_path).resolve().iterdir():

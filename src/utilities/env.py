@@ -13,7 +13,7 @@ class ProjectEnvironment:
         self.env_id = self.determine_env()
         self.env = {
             0: {
-                "base_path": str(Path(".").resolve()) + "/",
+                "base_path": str(Path("../..").resolve()) + "/",
                 "data_path": "data/",
                 "download_path": "download/",
                 "metadata_path": "metadata/",
@@ -42,7 +42,7 @@ class ProjectEnvironment:
                 "yt_dl_executable": "c:/tools/youtube-dl/youtube-dl.exe"
             },
             1: {
-                "base_path": str(Path(".").resolve()) + "/",
+                "base_path": str(Path("../..").resolve()) + "/",
                 "data_path": "data/",
                 "download_path": "download/",
                 "metadata_path": "metadata/",
@@ -81,7 +81,7 @@ class ProjectEnvironment:
         Returns: The environment id.
 
         """
-        cd = Path(".").resolve()
+        cd = Path("../..").resolve()
         if "C:" in str(cd):
             return 0
         elif "lustre" in str(cd):

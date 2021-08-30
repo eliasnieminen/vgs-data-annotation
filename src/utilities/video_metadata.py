@@ -4,6 +4,9 @@ from typing import Optional, Union, Dict
 
 
 class VideoMetadata:
+    """Metadata object for videos.
+
+    """
     def __init__(self,
                  dur: Optional[Union[None, float]] = None,
                  fps: Optional[Union[None, float]] = None,

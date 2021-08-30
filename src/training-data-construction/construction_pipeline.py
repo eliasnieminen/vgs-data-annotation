@@ -1,16 +1,12 @@
 import pickle
 
-import cv2 as cv
-import numpy as np
-import matplotlib.pyplot as plt
 import time
 
-import od_utils
-from env import ProjectEnvironment
+from src.utilities.env import ProjectEnvironment
+from src.utilities import construction_utils as cu, od_utils
+from src.analysis.speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
+from src.utilities.util import format_id
 from pathlib import Path
-import construction_utils as cu
-from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
-from util import format_id
 import librosa as lbr
 import soundfile as sf
 
@@ -26,7 +22,7 @@ allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
 
 # Determine which dataset and split (train, test, val)
 # the construction is performed on.
-target_dataset = "crosstask"
+target_dataset = "youcook2"
 target_split = "train"
 
 # Determine the object detection parameters (if used)
@@ -42,7 +38,17 @@ analyze_audio_content = False
 
 # Determine whether the clips are selected by random or they are loaded from
 # ready annotations.
-use_random_clips = False
+use_random_clips = True
+save_random_clips = True
+look_for_saved_random_clips = True
+
+random_clips_per_minute = 1
+random_clip_length = 2.0
+random_clip_snr_threshold = 0.8
+
+valid_random_clips_save_path \
+    = f"{env['base_path']}valid_random_clips/" \
+      f"{target_dataset}/{target_split}/"
 
 # If True, the best frames will be shown with matplotlib.pyplot.
 plotting = False
@@ -75,7 +81,7 @@ all_clips_and_frames = {}
 
 # DEV: For testing purposes, one can limit the max number of videos to be
 # processed. If None, there will be no limit.
-max_videos_limit = 2
+max_videos_limit = None
 
 # For keeping track of the video count.
 count = 0
@@ -94,13 +100,21 @@ for video_path in video_paths:
     fps = vid_metadata.fps
     frame_count = vid_metadata.frame_count
     metadata = vid_metadata.metadata
+    yt_id = metadata["yt_id"]
 
-    # Determine the save path.
-    frame_save_path = f"{env['clip_save_path']}" \
-                      f"{target_dataset}/{target_split}/frames/"
+    video_save_path = f"{env['base_path']}{env['clip_save_path']}" \
+                      f"{target_dataset}/{target_split}/{yt_id}/"
 
-    audio_save_path = f"{env['clip_save_path']}{target_dataset}/" \
-                      f"{target_split}/audio/"
+    # Determine the save paths.
+    frame_save_path = video_save_path + "frames/"
+
+    audio_save_path = video_save_path + "audio/"
+
+    pickle_save_path = video_save_path + "pickle/"
+
+    Path(frame_save_path).resolve().mkdir(parents=True, exist_ok=True)
+    Path(audio_save_path).resolve().mkdir(parents=True, exist_ok=True)
+    Path(pickle_save_path).resolve().mkdir(parents=True, exist_ok=True)
 
     # Get the clips.
     # If random clips, one can determine properties of the clips.
@@ -108,12 +122,37 @@ for video_path in video_paths:
     if use_random_clips:
         # The first list contains the timestamps in seconds, the second list
         # contains the same timestamps as video frame numbers.
-        clip_list, clip_list_as_frames = cu.get_random_clips_as_list(
-            n_clips=2,
-            clip_length=2.0,
-            video_metadata=vid_metadata,
-            sort_clips=True)
+        saved_clip_found = False
+        if look_for_saved_random_clips:
+            for saved_clip_file in Path(valid_random_clips_save_path).resolve().iterdir():
+                if yt_id in saved_clip_file.name:
+                    with open(str(saved_clip_file), 'rb') as saved_clip_pickle:
+                        data = pickle.load(saved_clip_pickle)
+                        clip_list = data["clip_list"]
+                        clip_list_as_frames = data["clip_list_as_frames"]
+                        saved_clip_found = True
+                    break
+
+        if not saved_clip_found:
+            clip_list, clip_list_as_frames = cu.get_random_clips_as_list_v2(
+                video_metadata=vid_metadata,
+                clips_per_minute=random_clips_per_minute,
+                clip_length=random_clip_length,
+                snr_threshold=random_clip_snr_threshold)
+
         clip_infos = None
+
+        if save_random_clips:
+            valid_clips_save_path = valid_random_clips_save_path + yt_id + "/"
+            Path(valid_random_clips_save_path).mkdir(parents=True,
+                                                     exist_ok=True)
+            file_name = f"{yt_id}_valid_random_clips.pickle"
+            with open(valid_random_clips_save_path + file_name, 'wb') as valid_random_clips_file:
+                pickle.dump({
+                    "clip_list": clip_list,
+                    "clip_list_as_frames": clip_list_as_frames
+                }, valid_random_clips_file)
+
     else:
         # The first list contains the timestamps in seconds, the second list
         # contains the same timestamps as video frame numbers. The third list
@@ -121,7 +160,7 @@ for video_path in video_paths:
         try:
             clip_list, clip_list_as_frames, clip_infos \
                 = cu.get_annotated_clips_as_list(
-                    yt_id=metadata["yt_id"],
+                    yt_id=yt_id,
                     target_dataset=target_dataset,
                     target_split=target_split)
         except ValueError:
@@ -193,7 +232,7 @@ for video_path in video_paths:
                                  duration=clip_duration)
 
             audio_file_name \
-                = f"{vid_metadata.metadata['yt_id']}_clip{clip_num}.wav"
+                = f"clip_{clip_num}.wav"
             audio_final_save_path = audio_save_path + audio_file_name
             sf.write(audio_final_save_path, audio, sr)
         else:
@@ -226,13 +265,12 @@ for video_path in video_paths:
 
         # Write the clip if allowed.
         if write_clips_during_processing:
-            save_path = f"{env['clip_save_path']}{target_dataset}/{target_split}/"
-            file_name = f"{format_id(count, 8)}_{vid_metadata.metadata['yt_id']}_" \
-                        f"clip{clip_num}.pickle"
+            save_path = pickle_save_path
+            file_name = f"clip_{clip_num}.pickle"
 
-            cu.write_clip(clip_info=all_info,
-                          save_path=save_path,
-                          file_name=file_name)
+            cu.write_clip_pickle(clip_info=all_info,
+                                 save_path=save_path,
+                                 file_name=file_name)
 
         clips_best_frames[i] = all_info
 
@@ -242,6 +280,8 @@ for video_path in video_paths:
 
     count += 1
 
+
+# Object detection part:
 if use_object_detection:
 
     print("Loading the model... This might take a while.")

@@ -180,20 +180,22 @@ def save_frame(save_dir: str,
       The ultimate file path that was saved.
 
     """
-    file_name = f"{yt_id}_clip{clip_id}_frame{frame_id}.jpg"
-    save_path = save_dir + file_name
-    cv.imwrite(save_path, frame)
+    file_name = f"frame_{frame_id}.jpg"
+    save_path = save_dir + f"/clip_{clip_id}/"
+    Path(save_path).mkdir(parents=True, exist_ok=True)
+    complete_save_path = save_path + file_name
+    cv.imwrite(complete_save_path, frame)
     return save_path
 
 
 def get_row_by_yt_id(csv_path: str, yt_id: str):
-    """
+    """Gets the row associated to a YouTube id from a specified csv file.
 
     Args:
-        csv_path:
-        yt_id:
+        csv_path: The csv-file path.
+        yt_id: The YouTube id.
 
-    Returns:
+    Returns: The csv row.
 
     """
     csv_file = open(csv_path, 'r')

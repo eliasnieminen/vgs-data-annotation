@@ -1,11 +1,11 @@
 import json
-import annotation_utils as au
+from src.utilities import annotation_utils as au
 
-from construction_utils import get_video_metadata
-from env import ProjectEnvironment
+from src.utilities.construction_utils import get_video_metadata
+from src.utilities.env import ProjectEnvironment
 from pathlib import Path
-from clipper import Clipper
-from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
+from src.utilities.clipper import Clipper
+from src.analysis.speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
 
 # Load the environment variable.
 env = ProjectEnvironment()

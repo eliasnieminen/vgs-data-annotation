@@ -1,15 +1,13 @@
-import os
 from typing import Optional, Union, Dict, List
 
 import numpy as np
 from pathlib import Path
-import os
 import subprocess
-from env import ProjectEnvironment
+from src.utilities.env import ProjectEnvironment
 
 
 class Clipper:
-    """
+    """Class for clipping videos.
 
     """
     def __init__(self, save_path: Optional[Union[str, None]] = None):
@@ -26,49 +24,30 @@ class Clipper:
                             verbose: Optional[int] = 1,
                             use_ffmpeg: Optional[bool] = True,
                             write_clips: Optional[bool] = True):
-        """
+        """Create random clips from a video.
 
         Args:
-            n_clips:
-            clip_length:
-            target_dataset:
-            verbose:
-            use_ffmpeg:
-            write_clips:
+            n_clips: How many clips?
+            clip_length: How long clips?
+            target_dataset: From which dataset?
+            verbose: Print logs?
+            use_ffmpeg: There is no other option than True at the moment.
+            write_clips: Write the clips to file?
 
-        Returns:
+        Returns: Clip onsets.
 
         """
 
         self.check_me()
 
         video_file_name = Path(self.current_file).resolve().stem
-        spl = video_file_name.split("_")
 
         if verbose == 1:
             print(f"Now processing {video_file_name}")
 
-        video_id = spl[0]
-        video_yt_id = "_".join(spl[1:])
-
         if not use_ffmpeg:
             print("Non-ffmpeg: Not implemented.")
             return None
-            # clip = VideoFileClip(video_file_path)
-            # duration = clip.duration
-            # clip_max_start_time = duration - clip_length
-            # clip_starts = np.random.rand(n_clips) * clip_max_start_time
-            #
-            # self.clips[video_file_name] = []
-            #
-            # for i in range(n_clips):
-            #     if verbose == 1:
-            #         print(f"Clip {i + 1} / {n_clips}")
-            #     start = clip_starts[i]
-            #     end = start + clip_length
-            #     subclip_video = clip.subclip(start, end)
-            #     self.clips[video_file_name].append(subclip_video)
-            #     # subclip_video.write_videofile(env["temp_path"] + "moro.mp4")
         else:
             output_dir = str(Path(f"{self.env['temp_path']}"
                                   f"{target_dataset}/").resolve())
@@ -97,12 +76,12 @@ class Clipper:
             return clip_starts
 
     def load(self, file: str):
-        """
+        """Loads a video (not to memory) and gets some metadata as well.
 
         Args:
-            file:
+            file: The file to be loaded.
 
-        Returns:
+        Returns: None
 
         """
         self.current_file = file
@@ -119,33 +98,10 @@ class Clipper:
 
         self.video_duration = float(duration_probe.stdout)
 
-    def get_random_clips_as_list(self,
-                                 n_clips: int,
-                                 clip_length: float,
-                                 sort: Optional[bool] = True):
-        """
-
-        Args:
-            n_clips:
-            clip_length:
-            sort:
-
-        Returns:
-
-        """
-        self.check_me()
-        starts = np.random.rand(n_clips) * self.video_duration
-        if sort:
-            starts = np.sort(starts)
-        clips = []
-        for s in starts:
-            clips.append((s, s + clip_length))
-        return clips
-
     def get_video_duration(self):
-        """
+        """Gets the video duration.
 
-        Returns:
+        Returns: Video duration as float.
 
         """
         return self.video_duration
@@ -155,15 +111,15 @@ class Clipper:
                     file_name: str,
                     start_t: float,
                     end_t: float):
-        """
+        """Writes a clip to file.
 
         Args:
-            save_path:
-            file_name:
-            start_t:
-            end_t:
+            save_path: The destination directory of the clip.
+            file_name: The file name of the clip.
+            start_t: The starting time of the clip.
+            end_t: The ending time of the clip.
 
-        Returns:
+        Returns: None
 
         """
 
@@ -180,9 +136,9 @@ class Clipper:
         ]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
     def check_me(self):
-        """
+        """Checks if everything is ok.
 
-        Returns:
+        Returns: None
 
         """
         assert self.video_duration is not None, "Video duration is None"

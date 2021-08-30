@@ -1,17 +1,17 @@
-import warnings
-
 import numpy as np
 import construction_utils as cu
-import annotation_utils as au
 import shutil
 import warnings
+import matplotlib
 
 from pathlib import Path
-from env import ProjectEnvironment
+from src.utilities.env import ProjectEnvironment
 from numpy.random import default_rng
-from speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
-from clipper import Clipper
+from src.analysis.speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
+from src.utilities.clipper import Clipper
 from audioread import NoBackendError
+
+matplotlib.use("TkAgg")
 
 env = ProjectEnvironment()
 
@@ -24,18 +24,22 @@ allowed_video_suffixes = [".mp4", ".mkv", ".webm"]
 
 target_dataset = "youcook2"
 target_split = "train"
-override_video_path = True
+override_video_path = False
 
-num_random_videos = 98
+num_random_videos = 8
 
 random_clips_per_minute = 3
 random_clips_per_second = random_clips_per_minute / 60
 random_clip_lenght = 10.0
 
-num_trials = 100
+num_trials = 40
+rand_nums = np.random.rand(num_trials)
+
+experiment = True
 
 sn_analyzer = YamNetSpeechNoiseAnalyzer()
 speech_noise_thresholds = [1.0, 0.9, 0.8]
+snr_threshold = 0.8
 
 if not override_video_path:
 
@@ -53,19 +57,22 @@ else:
 
 # clips_save_path = f"/lustre/scratch/specog/youcook2_analysis/" \
                   # f"{target_dataset}/{target_split}/"
-                  
-clips_save_path = "/lustre/scratch/specog/youcook2_analysis/"
+
+clips_save_path = f"subjective_analysis/clip_selection_comparison/" \
+                  f"{target_dataset}/{target_split}/"
 
 # Get all available video paths.
 all_video_paths = []
+file_count = 0
 for file in Path(video_path).resolve().iterdir():
     if file.suffix in allowed_video_suffixes:
         all_video_paths.append(str(file))
+        file_count += 1
 
 # Get random video paths from all video paths.
 num_videos = len(all_video_paths)
 rng = default_rng()
-random_video_indexes = rng.choice(num_videos, size=num_random_videos, replace=False)
+random_video_indexes = rng.choice(num_videos, size=file_count, replace=False)
 
 all_video_paths = np.array(all_video_paths)
 video_paths = all_video_paths[random_video_indexes]
@@ -77,14 +84,28 @@ video_count = 0
 bad_file = False
 
 for file in video_paths:
+    if video_lim is not None and "228" not in file:
+        continue
+
     if video_lim is not None and video_count == video_lim:
         break
 
+    print(str(file))
+
     bad_file = False
+    final_clips = []
 
     video_metadata = cu.get_video_metadata(file, target_dataset)
     duration = video_metadata.duration
     yt_id = video_metadata.metadata["yt_id"]
+
+    if Path(f"{clips_save_path}{yt_id}").exists():
+        print("Video has already been processed. Skipping.")
+        continue
+
+    seconds: np.ndarray = np.arange(0, int(duration))
+    np.random.shuffle(seconds)
+    seconds: list = np.ndarray.tolist(seconds)
 
     clipper = Clipper()
     clipper.load(file)
@@ -98,65 +119,48 @@ for file in video_paths:
     num_accepted_clips = 0
     accepted_clip_nums = []
 
-    for trial_num in range(num_trials):
+    for second in seconds:
 
-        print(f"Trial {trial_num + 1} / {num_trials}")
+        print(f"Second {second}")
 
-        found = False
+        rand_clip = (float(second), float(second) + random_clip_lenght)
 
-        rand_clips, rand_clips_as_frames = cu.get_random_clips_as_list(
-            n_clips=num_clips,
-            clip_length=random_clip_lenght,
-            video_metadata=video_metadata)
+        print(f"Current number of accepted clips: "
+              f"{num_accepted_clips} / {num_clips_whole}")
 
-        rand_clip = rand_clips[0]
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                speech_proportion, noise_proportion = sn_analyzer.analyze(
+                    file,
+                    start_t=rand_clip[0],
+                    end_t=rand_clip[1])
+        except NoBackendError:
+            print(f"Bad file: {file}. Skipping.")
+            bad_file = True
+            break
 
-        for speech_noise_threshold in speech_noise_thresholds:
+        if speech_proportion >= snr_threshold:
 
-            print(f"Processing SNR threshold of {speech_noise_threshold}")
+            file_name = f"{yt_id}_randomclip{num_accepted_clips}_" \
+                        f"SNR{int(speech_proportion * 100)}_sec{second}"
+            save_path = f"{clips_save_path}{yt_id}/yamnet/"
 
-            print(f"Current number of accepted clips: "
-                  f"{num_accepted_clips} / {num_clips_whole}")
+            # Create save dir if it doesn't exist.
+            Path(save_path).mkdir(parents=True, exist_ok=True)
 
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    speech_proportion, noise_proportion = sn_analyzer.analyze(
-                        file,
-                        start_t=rand_clip[0],
-                        end_t=rand_clip[1])
-            except NoBackendError:
-                print(f"Bad file: {file}. Skipping.")
-                bad_file = True
+            clipper.create_clip(save_path=save_path,
+                                file_name=file_name,
+                                start_t=rand_clip[0],
+                                end_t=rand_clip[1])
+
+            final_clips.append((rand_clip[0], rand_clip[1]))
+
+            found = True
+            num_accepted_clips += 1
+
+            if num_accepted_clips == num_clips_whole:
                 break
-
-            if speech_proportion >= speech_noise_threshold:  # Accept
-                file_name = f"{yt_id}_randomclip{num_accepted_clips}_" \
-                            f"SNR{int(speech_noise_threshold * 100)}"
-                save_path = f"{clips_save_path}{yt_id}/yamnet/"
-
-                # Create save dir if it doesn't exist.
-                Path(save_path).mkdir(parents=True, exist_ok=True)
-
-                clipper.create_clip(save_path=save_path,
-                                    file_name=file_name,
-                                    start_t=rand_clip[0],
-                                    end_t=rand_clip[1])
-
-                found = True
-                num_accepted_clips += 1
-
-                if found:
-                    break
-            else:
-                print("Not accepted, next trial.")
-
-
-        if bad_file:
-            break
-
-        if num_accepted_clips == num_clips_whole:
-            break
 
     if bad_file:
         continue

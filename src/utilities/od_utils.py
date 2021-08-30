@@ -6,13 +6,10 @@ import cv2 as cv
 
 
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional
 from object_detection.utils import ops as utils_ops
-from object_detection.utils import visualization_utils as vis_utils
 from PIL import Image
-from IPython.display import display
-from google.protobuf import text_format
-from util import format_2f
+from src.utilities.util import format_2f
 
 
 def load_model(model_name: str):

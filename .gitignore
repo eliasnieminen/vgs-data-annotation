@@ -1,5 +1,7 @@
 .idea/*
 __pycache__/*
+*/__pycache__/*
+*/*/__pycache__/*
 data/*
 download/*
 *.mp4
@@ -14,7 +16,7 @@ figures/*
 _temp/*
 clips/*
 img/*
-models/*
+src/models/*
 yamnet_segments/*
 testdownload/*
 clip_annotations/*
@@ -22,3 +24,5 @@ test/*
 histtest.py
 bash/*
 subjective_analysis/*
+valid_random_clips/*
+
