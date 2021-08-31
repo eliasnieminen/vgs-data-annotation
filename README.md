@@ -4,6 +4,55 @@ This repository contains tools for data annotation for CrossTask and YouCookII d
 
 All the source code is included in the `src` folder.
 
+## Very short and simple version :)
+
+Video reading:
+```python
+import cv2 as cv
+
+video_path = "path/to/video"
+
+# Set the start and end:
+starting_frame = 100
+ending_frame = 200
+
+# Open the capture interface:
+cap = cv.VideoCapture(video_path)
+
+# Wait for the video loading.
+while not cap.isOpened():
+  cap = cv.VideoCapture(video_path)
+  print("Waiting...")
+
+# Set starting point:
+cap.set(cv.CAP_PROP_POS_FRAMES, starting_frame)
+
+# Set the current position:
+pos_frame = starting_frame
+
+frame_counter = 0
+# Go through the frames:
+while True:
+  frame_reading_successful, frame = cap.read()
+  if frame_reading_successful:
+    # Get the current position:
+    pos_frame = cap.get(cv.CAP_PROP_POS_FRAMES)
+    frame_counter += 1
+    # Do what ever
+    # ====
+    # ====
+    # Reach the end:
+    if frame_counter == ending_frame - starting_frame:
+      break
+  else:
+    # Set cursor back by one.
+    cap.set(cv.CAP_PROP_POS_FRAMES, pos_frame - 1)
+    # Wait.
+    cv.waitKey(250)
+    
+
+```
+
 ## Installation
 
 Use `conda` to create a new environment. Dependencies:
@@ -163,7 +212,7 @@ clip_list, clip_list_as_frames = get_random_clips_as_list_v2(
 
 ### Video, Audio and Image Writing
 
-For video writing, `ffmpeg` is used. `src/utilities/clipper.py` contains a class for clipping video files (`Clipper`). The `Clipper.write_clip` function shows how to use the Python subprocess interface to write a clip with `ffpmpeg`.
+For video writing, `ffmpeg` is used. `src/utilities/clipper.py` contains a class for clipping video files (`Clipper`). The `Clipper.write_clip` function shows how to use the Python subprocess interface to write a clip with `ffpmpeg`. There is also an API for video writing provided by OpenCV, but it was not used here due to speed issues. When clipping the videos, some artifacts will be seen in the beginning of the clips, this is due to the video codec.
 
 For image writing, `opencv`'s `cv2.imwrite` function is used. See example in `src/utilities/construction_utilities.py -> save_frame`. _Keep in mind, that OpenCV uses BRG color model, so there might be some confusion when dealing with color images._
 
@@ -171,6 +220,30 @@ For audio writing, `soundfile` package is used: `soundfile.write(save_path, data
 
 ### Blur Detection
 
+`src/analysis/blur_detection.py` contains a class `BlurDetector`.
+
+Usage example:
+```python
+
+from src.analysis.blur_detection import BlurDetector
+
+img_path = "path/to/.jpg/or/.png/image"  # Other formats might be supported but not tried.
+
+blur_detector = BlurDetector()
+blur_detector.detect(img_path)
+blurriness = blur_detector.get_blurriness()
+
+print(blurriness)
+
+# The image could also be a np.ndarray:
+image = plt.imread(img_path)
+blur_detector.detect(image)
+blurriness = blur_detector.get_blurriness()
+
+print(blurriness)
+```
+
+Since there is no absolute value to determine if the image is blurry or not, some threshold should be defined for the blurriness. The smaller the value is, the blurrier the image is.
 
 ### `src/utilities/clipper.py`
 Contains a class for clipping video files (`Clipper`). The `Clipper.write_clip` function shows how to use the Python subprocess interface to write a clip with `ffpmpeg`.
