@@ -140,6 +140,32 @@ duration_probe = subprocess.run(" ".join([
 duration = float(duration_probe.stdout)
 ```
 
+Write video clips (a bit hacky and will contain artifacts):
+
+```python
+import subprocess
+
+source_video_path = "path/to/source.mp4"
+
+output_file_name = "video.mp4"
+output_directory = "output/dir"
+
+start_time = 10.0
+end_time = 20.0
+
+clip_length = end_time - start_time
+
+subprocess.run(" ".join([
+  self.env["ffmpeg_location"],  # ffmpeg executable
+  "-ss", str(start_time),  # Starting point
+  "-avoid_negative_ts", "1",  # Try to avoid artifacts (TODO)
+  "-i", source_video_path,  # Input file
+  "-c", "copy",  # Copy the file instead of editing it
+  "-t", str(clip_length),  # The duration of the clip
+  output_directory + output_file_name  # Output file
+]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+```
+
 ## Installation
 
 Use `conda` to create a new environment. Dependencies:
