@@ -69,3 +69,45 @@ This file contains a pipeline for constructing structured pickle files from the 
 
 ### `src/training-data-construction/construction_pipeline.py`
 This file contains a pipeline for constructing training data for VGS models. One can use random clipping (with audio content analysis) from the dataset videos or use the annotations computed with the `annotation_parsing.py` script.
+
+### `src/analysis/speech_noise_analyser.py`
+This file contains the `YamNetSpeechNoiseAnalyser` class which can be used to analyse the contents of an audio from a video file. The class uses `librosa` to load the audio, and `librosa` can also read the audio directly from a video file, so there is no need for additional steps to separate the audio from the video.
+
+Example use for analyzing a whole video:
+```python
+
+from src.analysis.speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
+
+sn_analyzer = YamNetSpeechNoiseAnalyser()
+
+video_path = "path/to/.mp4/or/.mkv/or/.webm/video"
+
+# Analyze the whole audio from the video:
+speech_proportion, noise_proportion = sn_analyzer.analyze(video_path, whole_video=True)
+
+# If one wants to only analyze a segment from the video:
+# (here, a 10 sec clip from 00:00:10.0 to 00:00:20.0 in the video)
+speech_proportion_segment, noise_proportion_segment = sn_analyzer.analyze(video_path, start_t=10.0, end_t=20.0)
+
+# This returns all of the segments with speech or noise label
+# segments = [
+#   {"segment": {start, end} (as floats), "content": 0 = noise or 1 = speech}
+# ]
+segments = sn_analyzer.get_segments()
+
+# If one wants to plot the segments with matplotlib:
+import matplotlib.pyplot as plt
+contents = []
+
+# Get the segment contents with a loop.
+for segment in segments:
+  contents.append(segment["content"])
+
+# Create n for plotting the segments:
+n = range(len(contents))
+
+# Plot.
+plt.step(n, contents)
+plt.show()
+
+```
