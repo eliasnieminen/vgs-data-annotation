@@ -162,32 +162,6 @@ def format_id(i: int, e: Optional[int] = 8) -> str:
     return num_str
 
 
-def save_frame(save_dir: str,
-               frame: np.ndarray,
-               yt_id: str,
-               clip_id: int,
-               frame_id: int) -> str:
-    """Saves a frame as an image to the specified directory.
-
-    Args:
-      save_dir: The directory where the frame should be saved.
-      frame: The frame to be saved.
-      yt_id: The YouTube id of the video that the frame is from.
-      clip_id: The id of the random clip that the frame is from.
-      frame_id: The id of the frame.
-
-    Returns:
-      The ultimate file path that was saved.
-
-    """
-    file_name = f"frame_{frame_id}.jpg"
-    save_path = save_dir + f"/clip_{clip_id}/"
-    Path(save_path).mkdir(parents=True, exist_ok=True)
-    complete_save_path = save_path + file_name
-    cv.imwrite(complete_save_path, frame)
-    return save_path
-
-
 def get_row_by_yt_id(csv_path: str, yt_id: str):
     """Gets the row associated to a YouTube id from a specified csv file.
 

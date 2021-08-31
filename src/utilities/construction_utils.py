@@ -4,18 +4,15 @@ import cv2 as cv
 import math
 
 import numpy as np
-import src.utilities.od_utils
 # matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-from src.utilities import util
 import pickle
 
 from src.utilities.env import ProjectEnvironment
 from pathlib import Path
 from typing import Optional, List, Union
 from src.utilities.video_metadata import VideoMetadata
-from src.analysis.image_quality import BlurDetector
-from src.utilities.clipper import Clipper
+from src.analysis.blur_detection import BlurDetector
 from audioread import NoBackendError
 from src.analysis.speech_noise_analyzer import YamNetSpeechNoiseAnalyzer
 
@@ -113,10 +110,10 @@ def get_video_metadata(video_path: str, original_dataset: str):
         dur=dur,
         fps=fps,
         metadata={
-            "filename": video_path,
-             "yt_id": yt_id,
-             "task_id": task_id,
-             "original_dataset": original_dataset
+            "file_name": video_path,
+            "yt_id": yt_id,
+            "task_id": task_id,
+            "original_dataset": original_dataset
         })
     return vd
 
@@ -166,6 +163,7 @@ def get_random_clips_as_list(n_clips: int,
 def get_random_clips_as_list_v2(video_metadata: VideoMetadata,
                                 clips_per_minute: Optional[int] = 3,
                                 clip_length: Optional[float] = 10.0,
+                                use_speech_detection: Optional[bool] = False,
                                 snr_threshold: Optional[float] = 0.8):
     """Generates random clips and analyzes their audio contents, returns a
     list of random clips that have SNR over the snr_threshold.
@@ -175,6 +173,7 @@ def get_random_clips_as_list_v2(video_metadata: VideoMetadata,
         clips_per_minute: The amount of random clips generated per minute on
                           average.
         clip_length: The random clip length.
+        use_speech_detection:
         snr_threshold: The SNR threshold for selecting a clip. The SNR will be
                        computed for all of the clips and the ones that have
                        a higher or equal threshold will be accepted to be
@@ -221,36 +220,46 @@ def get_random_clips_as_list_v2(video_metadata: VideoMetadata,
         print(f"Current number of accepted clips: "
               f"{num_accepted_clips} / {num_clips_whole}")
 
-        try:
-            # PySound fails which will print out a warining.
-            # The warnings are suppressed.
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                # Compute the speech and noise proportions with the analyzer
-                # class.
-                speech_proportion, noise_proportion = sn_analyzer.analyze(
-                    file,
-                    start_t=rand_clip[0],
-                    end_t=rand_clip[1])
-        # Some files are corrupted and will cast an error, those files will
-        # be skipped.
-        except NoBackendError:
-            print(f"Bad file: {file}. Skipping.")
-            bad_file = True
-            break
+        if use_speech_detection:
 
-        # Check if the speech proportion of the clip is acceptable.
-        if speech_proportion >= snr_threshold:
+            try:
+                # PySound fails which will print out a warining.
+                # The warnings are suppressed.
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    # Compute the speech and noise proportions with the analyzer
+                    # class.
+                    speech_proportion, noise_proportion = sn_analyzer.analyze(
+                        file,
+                        start_t=rand_clip[0],
+                        end_t=rand_clip[1])
+            # Some files are corrupted and will cast an error, those files will
+            # be skipped.
+            except NoBackendError:
+                print(f"Bad file: {file}. Skipping.")
+                bad_file = True
+                break
 
+            # Check if the speech proportion of the clip is acceptable.
+            if speech_proportion >= snr_threshold:
+
+                final_clips.append((rand_clip[0], rand_clip[1]))
+                final_clips_as_frames.append(
+                    (int(rand_clip[0] * video_metadata.fps),
+                     int(rand_clip[1] * video_metadata.fps)))
+
+                num_accepted_clips += 1
+
+                # The sufficient amount of clips have been found.
+                # Break.
+                if num_accepted_clips == num_clips_whole:
+                    break
+        else:
             final_clips.append((rand_clip[0], rand_clip[1]))
             final_clips_as_frames.append(
                 (int(rand_clip[0] * video_metadata.fps),
                  int(rand_clip[1] * video_metadata.fps)))
-
             num_accepted_clips += 1
-
-            # The sufficient amount of clips have been found.
-            # Break.
             if num_accepted_clips == num_clips_whole:
                 break
 
@@ -402,7 +411,7 @@ def select_sharpest_frames(video_path: str,
                 if return_type == "numpy":
                     best_frames.append(best_frame)
                 elif return_type == "path":
-                    best_frames.append(util.save_frame(
+                    best_frames.append(save_frame(
                         save_dir=save_dir,
                         frame=best_frame,
                         yt_id=video_metadata.metadata["yt_id"],
@@ -438,6 +447,32 @@ def select_sharpest_frames(video_path: str,
 
     # After determining the best frame for each second, return the results.
     return best_frames
+
+
+def save_frame(save_dir: str,
+               frame: np.ndarray,
+               yt_id: str,
+               clip_id: int,
+               frame_id: int) -> str:
+    """Saves a frame as an image to the specified directory.
+
+    Args:
+      save_dir: The directory where the frame should be saved.
+      frame: The frame to be saved.
+      yt_id: The YouTube id of the video that the frame is from.
+      clip_id: The id of the random clip that the frame is from.
+      frame_id: The id of the frame.
+
+    Returns:
+      The ultimate file path that was saved.
+
+    """
+    file_name = f"frame_{frame_id}.jpg"
+    save_path = save_dir + f"/clip_{clip_id}/"
+    Path(save_path).mkdir(parents=True, exist_ok=True)
+    complete_save_path = save_path + file_name
+    cv.imwrite(complete_save_path, frame)
+    return save_path
 
 
 def detect_objects(clips_and_frames: dict,
