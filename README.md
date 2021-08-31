@@ -156,7 +156,7 @@ end_time = 20.0
 clip_length = end_time - start_time
 
 subprocess.run(" ".join([
-  self.env["ffmpeg_location"],  # ffmpeg executable
+  "ffmpeg",  # ffmpeg executable
   "-ss", str(start_time),  # Starting point
   "-avoid_negative_ts", "1",  # Try to avoid artifacts (TODO)
   "-i", source_video_path,  # Input file
