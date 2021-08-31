@@ -50,7 +50,94 @@ while True:
     # Wait.
     cv.waitKey(250)
     
+```
 
+Read audio from video file:
+
+```python
+import librosa
+video_path = "video/path"
+audio, sr = librosa.load(video_path, sr=None)
+
+# There you go!
+```
+
+Get blurriness:
+
+```python
+import cv2 as cv
+image = ... # an np.array
+image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+blurriness = cv.Laplacian(image_gray, cv.CV_64F).var()
+
+# There you go!
+```
+
+YAMNet:
+
+```python
+import src.models.yamnet.yamnet as yamnet_model
+import src.models.yamnet.params as yamnet_params
+
+# Prepare YAMNet:
+
+params = yamnet_params.Params(sample_rate=16000, patch_hop_seconds=0.5)
+class_names = yamnet_model.class_names("path/to/yamnet_class_map.csv")
+yamnet = yamnet_model.yamnet_frames_model(params)
+yamnet.load_weights("path/to/yamnet_weights.h5")
+
+# Load audio (it has to be resampled to 16000 Hz because YAMNet).
+video_path = "video/path"
+audio, sr = librosa.load(video_path,
+                         sr=16000,
+                         mono=True,
+                         offset=...,  # time of clip start
+                         duration=...,  # clip duration
+                         res_type="kaiser_fast")
+
+# Use YAMNet:
+scores, embeddings, spectrogram = self.yamnet(audio)
+
+# Max scores: returns the max scoring class for each segment.
+max_scores = np.argmax(scores, axis=1)
+
+# Suitable class indexes for speech: 0, 1, 2, 3
+for class_index in max_scores:
+  if class_index in [0, 1, 2, 3]:
+    print("Speech! :)")
+  else:
+    print("Noise! :(")
+
+# All done!
+```
+
+Get video duration, the EASY way (but might not be always right)
+
+```python
+import librosa
+video_path = "video/path"
+audio, sr = librosa.load(video_path, sr=None)
+duration = librosa.get_duration(audio, sr)
+```
+
+Get video duration, the HARD and HACKY but TRUSTWORTHY way:
+
+```python
+import subprocess
+
+video_path = "video/path"
+
+duration_probe = subprocess.run(" ".join([
+    "ffprobe",
+    "-v", "error",
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+    video_path
+]), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+duration = float(duration_probe.stdout)
 ```
 
 ## Installation
