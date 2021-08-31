@@ -6,6 +6,9 @@ from typing import Optional, Union
 
 import src.models.yamnet.yamnet as yamnet_model
 import src.models.yamnet.params as yamnet_params
+from src.utilities.env import ProjectEnvironment
+
+env = ProjectEnvironment()
 
 
 class YamNetSpeechNoiseAnalyzer:
@@ -38,11 +41,11 @@ class YamNetSpeechNoiseAnalyzer:
                                            patch_hop_seconds=self.hop)
         # YAMNet classes.
         self.class_names = yamnet_model.class_names(
-            "../models/yamnet/yamnet_class_map.csv")
+            f"{env['base_path']}src/models/yamnet/yamnet_class_map.csv")
         # The model itself.
         self.yamnet = yamnet_model.yamnet_frames_model(self.params)
         # Load weights.
-        self.yamnet.load_weights("../models/yamnet/yamnet.h5")
+        self.yamnet.load_weights(f"{env['base_path']}src/models/yamnet/yamnet.h5")
         # The analyzed segments container.
         self.segments = []
 
@@ -119,11 +122,11 @@ class YamNetSpeechNoiseAnalyzer:
                class_index == 2 or \
                class_index == 3:
                 speech_count += 1
-                seg["content"] = 0
+                seg["content"] = 1
             # The segment contains noise.
             else:
                 noise_count += 1
-                seg["content"] = 1
+                seg["content"] = 0
             # Append the segment to the container list.
             segments.append(seg)
             count += 1

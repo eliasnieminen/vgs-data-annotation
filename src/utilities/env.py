@@ -13,7 +13,7 @@ class ProjectEnvironment:
         self.env_id = self.determine_env()
         self.env = {
             0: {
-                "base_path": str(Path("../..").resolve()) + "/",
+                "base_path": "c:/users/elias/pycharmprojects/data-annotation/",
                 "data_path": "data/",
                 "download_path": "download/",
                 "metadata_path": "metadata/",
